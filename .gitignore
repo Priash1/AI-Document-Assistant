@@ -1,0 +1,12 @@
+.venv/
+venv/
+
+__pycache__/
+*.pyc
+
+uploads/
+vector_db/
+
+.env
+
+.streamlit/
