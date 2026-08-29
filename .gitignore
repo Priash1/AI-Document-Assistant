@@ -1,12 +1,43 @@
+# Python
 .venv/
 venv/
-
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.uv-cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
 
+# Confidential/local application data
 uploads/
 vector_db/
-
 .env
-
+.env.*
+!.env.example
 .streamlit/
+!.streamlit/config.toml
+
+# Node / Midnight generated and private state
+node_modules/
+midnight/contracts/managed/
+midnight/**/dist/
+midnight/**/.private-state/
+midnight/**/.midnight-state.json
+midnight/**/.midnight-wallet-state/
+midnight/**/.private-docs-state.json
+midnight/**/private-docs-contract-state/
+midnight/**/.wallet*/
+midnight/**/wallet-state/
+midnight/**/proof-data/
+midnight/**/*.seed
+midnight/**/*.mnemonic
+midnight/**/*.key
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

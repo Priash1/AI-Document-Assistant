@@ -1,0 +1,134 @@
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+
+// Public ledger state contains commitments and nullifiers only. The original
+// PDF bytes, extracted text, document digest, query digest, openings and owner
+// secret are private circuit inputs and are never disclosed by this contract.
+export sealed ledger ownerCommitment: Bytes<32>;
+export ledger registeredDocuments: Set<Bytes<32>>;
+export ledger authorizedQueries: Set<Bytes<32>>;
+export ledger consumedNullifiers: Set<Bytes<32>>;
+export ledger revokedDocuments: Set<Bytes<32>>;
+
+constructor(ownerSecret: Bytes<32>) {
+    ownerCommitment = disclose(ownerKey(ownerSecret));
+}
+
+// Registration is intentionally idempotent. A browser refresh can submit a
+// fresh, real transaction without either fabricating a receipt or revealing
+// whether this private document digest was registered previously.
+export circuit registerDocument(
+    ownerSecret: Bytes<32>,
+    documentDigest: Bytes<32>,
+    documentOpening: Bytes<32>
+): [] {
+    requireOwner(ownerSecret);
+    const commitment = commitDocument(documentDigest, documentOpening);
+    assert(!revokedDocuments.member(commitment), "Document permission is revoked");
+    if (!registeredDocuments.member(commitment)) {
+        registeredDocuments.insert(commitment);
+    }
+}
+
+// Each authorization uses a fresh opening. The commitment therefore binds one
+// document-query pair without publishing either digest and can be authorized
+// again later with a new opening after its prior nullifier was consumed.
+export circuit authorizeQuery(
+    ownerSecret: Bytes<32>,
+    documentDigest: Bytes<32>,
+    documentOpening: Bytes<32>,
+    queryDigest: Bytes<32>,
+    authorizationOpening: Bytes<32>
+): [] {
+    requireOwner(ownerSecret);
+    const document = commitDocument(documentDigest, documentOpening);
+    const authorization = commitAuthorization(
+        documentDigest,
+        queryDigest,
+        authorizationOpening
+    );
+    const nullifier = authorizationNullifier(authorization);
+
+    assert(registeredDocuments.member(document), "Document is not registered");
+    assert(!revokedDocuments.member(document), "Document permission is revoked");
+    assert(!authorizedQueries.member(authorization), "Authorization already exists");
+    assert(!consumedNullifiers.member(nullifier), "Authorization was already consumed");
+    authorizedQueries.insert(authorization);
+}
+
+// The deterministic nullifier makes the exact committed authorization
+// single-use. The authorization commitment remains as an immutable audit
+// record; liveness is authorizedQueries.member && !consumedNullifiers.member.
+export circuit consumeQuery(
+    ownerSecret: Bytes<32>,
+    documentDigest: Bytes<32>,
+    documentOpening: Bytes<32>,
+    queryDigest: Bytes<32>,
+    authorizationOpening: Bytes<32>
+): [] {
+    requireOwner(ownerSecret);
+    const document = commitDocument(documentDigest, documentOpening);
+    const authorization = commitAuthorization(
+        documentDigest,
+        queryDigest,
+        authorizationOpening
+    );
+    const nullifier = authorizationNullifier(authorization);
+
+    assert(registeredDocuments.member(document), "Document is not registered");
+    assert(!revokedDocuments.member(document), "Document permission is revoked");
+    assert(authorizedQueries.member(authorization), "Query is not authorized");
+    assert(!consumedNullifiers.member(nullifier), "Authorization was already consumed");
+    consumedNullifiers.insert(nullifier);
+}
+
+// Revocation is permanent for the deterministic document commitment in this
+// deployment. Existing query authorizations can no longer be consumed.
+export circuit revokeDocument(
+    ownerSecret: Bytes<32>,
+    documentDigest: Bytes<32>,
+    documentOpening: Bytes<32>
+): [] {
+    requireOwner(ownerSecret);
+    const commitment = commitDocument(documentDigest, documentOpening);
+    assert(registeredDocuments.member(commitment), "Document is not registered");
+    assert(!revokedDocuments.member(commitment), "Document permission is already revoked");
+    revokedDocuments.insert(commitment);
+}
+
+circuit requireOwner(ownerSecret: Bytes<32>): [] {
+    assert(ownerCommitment == ownerKey(ownerSecret), "Invalid PrivateDocs owner secret");
+}
+
+circuit ownerKey(ownerSecret: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([
+        pad(32, "privatedocs:owner:v1:"),
+        ownerSecret
+    ]);
+}
+
+circuit commitDocument(
+    documentDigest: Bytes<32>,
+    documentOpening: Bytes<32>
+): Bytes<32> {
+    return persistentCommit<Bytes<32>>(documentDigest, documentOpening);
+}
+
+circuit commitAuthorization(
+    documentDigest: Bytes<32>,
+    queryDigest: Bytes<32>,
+    authorizationOpening: Bytes<32>
+): Bytes<32> {
+    return persistentCommit<Vector<2, Bytes<32>>>(
+        [documentDigest, queryDigest],
+        authorizationOpening
+    );
+}
+
+circuit authorizationNullifier(authorization: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([
+        pad(32, "privatedocs:nullifier:v1:"),
+        authorization
+    ]);
+}

@@ -1,0 +1,6 @@
+faiss-cpu>=1.10,<2
+numpy>=1.26,<3
+openai>=2.43,<3
+pymupdf>=1.26,<2
+sentence-transformers>=5.1,<6
+streamlit>=1.50,<2
