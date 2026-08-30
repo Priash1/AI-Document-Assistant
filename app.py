@@ -630,7 +630,7 @@ if document and permission:
         for verified_receipt in permission.receipts:
             _render_receipt(verified_receipt)
 else:
-    st.info("Upload a PDF to begin. Until then, no document or query leaves the browser session.")
+    st.info("Upload a PDF to begin. The PDF is processed in the local application and is not sent to Midnight or the AI provider at this stage.")
 
 st.markdown(
     '<div class="footer-note">PrivateDocs AI · Integrate Midnight Hackathon · '

@@ -183,9 +183,32 @@ scripts/create_demo_pdf.py   Reproducible demo-PDF generator
 
 ## Current verification status
 
-- Python: runnable on this host; full unit suite must remain green.
-- Midnight TypeScript: strict type-check and local commitment tests are runnable on this host.
-- Compact compilation and real proofs: require WSL2/Linux + Docker and are intentionally blocked on native Windows. The workflow is prepared to run them on Ubuntu after you approve a commit/push.
-- Public Preview/Preprod: supported by the scaffold, but requires a funded testnet wallet and strong `PRIVATE_STATE_PASSWORD`; no public deployment is claimed until an address and transaction receipts exist.
+✅ **Real Midnight proof lifecycle verified.**
 
-Research sources and claim decisions are recorded in [docs/report-source.md](docs/report-source.md).
+The `hackathon/private-docs-ai` branch has passed the complete GitHub Actions verification pipeline on Ubuntu:
+
+- **Python privacy + RAG tests:** passed
+- **Ruff linting:** passed
+- **Compact contract compilation:** passed
+- **TypeScript strict build:** passed
+- **Midnight commitment/runtime tests:** passed
+- **Real local Midnight proof lifecycle:** passed
+
+The real E2E workflow successfully verifies:
+
+1. document registration;
+2. exact document–query authorization;
+3. rejection of a wrong query;
+4. one-time authorization consumption;
+5. replay rejection;
+6. reauthorization;
+7. document revocation; and
+8. rejection after revocation.
+
+No simulated authorization path or mocked proof receipt is used.
+
+The verified milestone is preserved by the tag:
+
+`midnight-e2e-verified`
+
+Public Preview/Preprod deployment is not claimed; the verified environment is the real local Midnight devnet used by the automated E2E workflow.

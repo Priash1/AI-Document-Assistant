@@ -17,7 +17,7 @@ vector_db/
 .env
 .env.*
 !.env.example
-.streamlit/
+.streamlit/*
 !.streamlit/config.toml
 
 # Node / Midnight generated and private state
