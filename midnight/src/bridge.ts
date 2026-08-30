@@ -238,6 +238,7 @@ async function initializeRuntime(): Promise<RuntimeContext> {
   await persistWalletState(network, wallet);
 
   const providers = buildProviders(wallet, zkConfigPath, config);
+  providers.privateStateProvider.setContractAddress(deployment.address);
   const deployed = await findDeployedContract(providers, {
     compiledContract: compiledContract as any,
     contractAddress: deployment.address,
